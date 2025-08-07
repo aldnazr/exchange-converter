@@ -1,0 +1,45 @@
+.tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.2rem 0.75rem;
+    margin-bottom: 1rem;
+    background-color: white;
+}
+
+.tab {
+    padding: 0.5rem 1rem;
+    background-color: #f0f2f5;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    border-radius: var(--bs-border-radius-pill)
+}
+
+.tab.active {
+    background-color: #2a3b8f;
+    color: white;
+}
+
+.convert {
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+}
+
+.button_custom {
+    width: 13rem;
+    height: 3rem;
+    font-weight: bold;
+}
+
+.switch {
+    position: absolute;
+    display: flex;
+    top: 38%;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    z-index: 10;
+    align-items: center;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}

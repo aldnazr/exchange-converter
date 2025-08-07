@@ -1,0 +1,157 @@
+﻿@page "/"
+@inject IExchangeRateService ExchangeService
+@rendermode InteractiveServer
+
+@if (rates == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="items-center justify-center">
+        <PageTitle>Home</PageTitle>
+        <!-- Container Header -->
+        <div class="page-header my-4 py-4 px-3 text-center position-relative">
+            <h1 class="display-4 fw-bold text-dark">
+                <i class="bi bi-currency-exchange me-2"></i> Exchange Converter
+            </h1>
+            <p class="lead text-secondary">Convert currencies in real-time with live exchange rates</p>
+            <div class="underline mx-auto mt-3"></div>
+        </div>
+
+
+        <div class="d-flex flex-column w-auto p-4 bg-white shadow-lg rounded-4">
+            <div class="tabs border rounded-pill">
+                <button class="tab active">Convert</button>
+                <button class="tab">Send</button>
+                <button class="tab">Charts</button>
+                <button class="tab">Alerts</button>
+            </div>
+            <div class="convert gap-3">
+                <input type="number" @bind="amount" min="0" class="form-control form-control-lg mb-3" style="flex: 1;"
+                    placeholder="Input amount" />
+                <div class="d-flex position-relative align-items-center gap-3" style="flex: 2;">
+                    <!-- Select from -->
+                    <select class="form-select form-select-lg rounded-3" @bind="fromCurrency">
+                        @foreach (var item in rates.Conversion_Rates!)
+                        {
+                            <option value="@item.Key">@item.Key</option>
+                        }
+                    </select>
+
+                    <!-- Tombol swap -->
+                    <button class="switch btn btn-light border rounded-circle translate-middle" @onclick="swapCurrencies">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-arrow-left-right" viewBox="0 0 14 14">
+                            <path fill-rule="evenodd"
+                                d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
+                        </svg>
+                    </button>
+
+                    <!-- Select to -->
+                    <select class="form-select form-select-lg rounded-3" @bind="toCurrency">
+                        @foreach (var item in rates.Conversion_Rates)
+                        {
+                            <option value="@item.Key">@item.Key</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div>
+                    <h6>@amount @fromCurrency =</h6>
+                    <h2 class="fw-semibold">@convertResult @toCurrency</h2>
+                </div>
+
+                <button @onclick="() => convert(amount, fromCurrency, toCurrency)"
+                    class="btn btn-primary button_custom">Convert</button>
+            </div>
+            <p class="mt-2">Last updated: @rates.Time_Last_Update_Utc</p>
+        </div>
+    </div>
+
+    <div class="p-4 border rounded-3" style="margin: 20vh 0px;">
+        @{
+            var items = rates.Conversion_Rates.ToList();
+        }
+        <table class=" table table-light">
+            <thead>
+                <tr>
+                    <th colspan="2" scope=" col">Currency</th>
+                    <th></th>
+                    <th colspan="4" scope="col">Amount</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th scope="col">Handle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < 7; i++)
+                {
+                    var item = items[i];
+                    <tr class="@(i == 0 ? "table-active" : "") align-middle rounded-3">
+                        <th colspan="2" scope="row">
+                            <img src=@GetFlagUrl(item.Key) class="me-4" />
+                            @item.Key
+                        </th>
+                        <td></td>
+                        <td colspan="4">@item.Value</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <button class="@(i == 0 ? "d-none" : "") btn btn-danger" style="max-width: 8rem;">
+                                <span class="bi bi-trash3 me-2"></span>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <button class="btn btn-primary button_custom">Add Currency</button>
+    </div>
+}
+
+@code {
+    private ExchangeRateResponse? rates;
+    private int amount = 0;
+    private string? fromCurrency;
+    private string? toCurrency;
+    private double convertResult = 0;
+
+    private void swapCurrencies()
+    {
+        var temp = fromCurrency;
+        fromCurrency = toCurrency;
+        toCurrency = temp;
+    }
+
+    private string GetFlagUrl(string currencyCode)
+    {
+        return $"https://flagcdn.com/24x18/{currencyCode.ToLower().Substring(0, 2)}.png";
+    }
+
+    private void convert(int? amount, string from, string to)
+    {
+        var fromRate = rates!.Conversion_Rates![from];
+        var toRate = rates.Conversion_Rates[to];
+
+        convertResult = (double)(amount! * (toRate / fromRate));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        rates = await ExchangeService.GetRatesAsync("USD");
+
+        if (rates?.Conversion_Rates?.Any() == true)
+        {
+            fromCurrency = rates.Conversion_Rates.Keys.First();
+            toCurrency = rates.Conversion_Rates.Keys.Skip(1).First();
+        }
+    }
+}
